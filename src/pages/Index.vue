@@ -23,9 +23,9 @@
                   <div tabindex="-1" class="q-field__control relative-position row no-wrap">
                       <div class="q-field__control-container col relative-position row no-wrap q-anchor--skip">
                           <!-- <GmapAutocomplete class="q-field__native q-placeholder form__input" :class="[user.address !== ''? 'form__input--no-empty': '']" placeholder="Onde está trabalhando?" @place_changed="setPlace"/> -->
-                            <gmap-autocomplete :value="user.address.description"
+                            <gmap-autocomplete :value="user.userAddress.description"
                               class="q-field__native q-placeholder form__input"
-                              :class="[user.address !== ''? 'form__input--no-empty': '']"
+                              :class="[user.userAddress.description !== ''? 'form__input--no-empty': '']"
                               placeholder="Onde está trabalhando?"
                               @place_changed="setPlace"
                               :select-first-on-enter="true">
@@ -72,7 +72,7 @@
                 <div class="q-field__inner relative-position col self-stretch column justify-center">
                     <div tabindex="-1" class="q-field__control relative-position row no-wrap">
                         <div class="q-field__control-container col relative-position row no-wrap q-anchor--skip">
-                          <gmap-autocomplete :value="user.address.description"
+                          <gmap-autocomplete :value="user.userAddress.description"
                             class="q-field__native q-placeholder"
                             placeholder="Onde está trabalhando?"
                             @place_changed="setPlace"
@@ -97,7 +97,7 @@
         </q-card-section>
 
         <q-card-section class="flex flex-center">
-          <q-btn label="Registrar Endereço" icon-right="eva-map-outline" rounded color="primary" no-caps @click="diagForm = true" />
+          <q-btn label="Registrar Endereço" icon-right="eva-map-outline" rounded color="primary" no-caps @click="registerUser" />
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -109,13 +109,13 @@
         </q-card-section>
 
         <q-card-section class="col q-gutter-md">
-          <q-input dense class="col" filled input-class="text-center"  v-model="user.email" label="Email" type="email"/>
-          <q-input dense class="col" filled input-class="text-center"  v-model="user.password" label="Senha" type="password" />
+          <q-input dense class="col" filled input-class="text-center"  v-model="admin.email" label="Email" type="email"/>
+          <q-input dense class="col" filled input-class="text-center"  v-model="admin.password" label="Senha" type="password" />
 
         </q-card-section>
 
         <q-card-section class="flex flex-center">
-          <q-btn label="Acessar" rounded color="primary" no-caps @click="openDashboard" />
+          <q-btn label="Acessar" rounded color="primary" no-caps @click="login" />
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -141,6 +141,10 @@ export default {
       diagAdmin: false,
       map: {},
       place: '',
+      admin: {
+        email: '',
+        password: ''
+      },
       options: {
         zoomControl: false,
         fullscreenControl: false,
@@ -154,7 +158,9 @@ export default {
       diagForm: false,
       user: {
         name: '',
-        address: '',
+        userAddress: {
+          description: ''
+        },
         email: '',
         password: ''
       }
@@ -170,33 +176,70 @@ export default {
       this.$router.push('dashboard')
     },
 
+    async login () {
+      try {
+        const loginResult = await this.$axios.post('/User/login', this.admin)
+
+        localStorage.setItem('access_token', loginResult.data.token)
+        this.openDashboard()
+      } catch (e) {
+        console.log(e)
+      }
+    },
+
     setPlace (place) {
       this.place = place
       this.setCordenadas.lat = this.place.geometry.location.lat()
       this.setCordenadas.lng = this.place.geometry.location.lng()
 
-      this.user.address = { ...this.setCordenadas }
+      const listaAddress = this.place.formatted_address.split(',')
 
-      console.log('Eis aqui o malandrao: ', this.user)
+      this.user.userAddress.addressName = listaAddress[0]
+      this.user.userAddress.zipCode = listaAddress[1].split('-')[0].trim()
+      this.user.userAddress.neighborhood = listaAddress[1].split('-')[1]
+
+      this.user.userAddress.city = listaAddress[2].split('-')[0].trim()
+      this.user.userAddress.state = listaAddress[2].split('-')[1]
+
+      this.user.userAddress.country = listaAddress[4]
+
+      this.user.userAddress.latitude = this.setCordenadas.lat.toString()
+      this.user.userAddress.longitude = this.setCordenadas.lng.toString()
+
       this.diagForm = true
 
-      this.user.address.description = this.place.formatted_address
-      console.log(place)
+      console.log('Eis aqui o malandrao: ', this.user)
+      this.user.userAddress.description = this.place.formatted_address
     },
 
-    async registerAddress () {
+    async registerUser () {
       try {
-        const sendUser = { ...this.user }
+        const { name, email, password } = this.user
 
-        const result = await this.$axios.post('/user', sendUser)
+        const sendUser = { name, email, password }
 
-        console.log('Registrado com Sucesso', result)
+        console.log('Estou enviando este nego: ', sendUser)
 
-        if (result) {
+        const userResult = await this.$axios.post('User', sendUser)
 
+        console.log(userResult)
+        if (userResult.data.token) {
+          const addressResult = await this.$axios.post(`User/${userResult.data.id}/places`, this.user.userAddress, { headers: { Authorization: `Bearer ${userResult.data.token}` } })
+
+          console.log('Deu bom meu chapa: ', addressResult)
+          this.user = { userAddress: { description: '' } }
+          this.diagForm = false
+          this.$q.notify({
+            color: 'green',
+            textColor: 'white',
+            icon: 'success',
+            message: 'Registro realizado com Sucesso! 😁 Obrigado pela disposição :)',
+            position: 'center',
+            timeout: Math.random() * 5000 + 3000
+          })
         }
       } catch (e) {
-
+        console.log(e)
       }
     }
   }

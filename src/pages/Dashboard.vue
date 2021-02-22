@@ -5,13 +5,14 @@
       </q-page-sticky>
       <div class="row area">
           <div class="col-md-3 col-sm-3">
-            <div class="q-pa-md">
+            <div>
               <q-table
-                grid
-                style="height: 300px !important; background-color: red"
-                :rows-per-page-options="[0]"
-                grid-header
+                style="max-height: 900px"
+                virtual-scroll
+                @request="onRequest"
                 title="Colaboradores"
+                bordered
+                flat
                 :data="data"
                 row-key="name"
                 :filter="filter"
@@ -28,14 +29,12 @@
                   </q-input>
                 </template>
 
-                <template v-slot:item="props" style="background-color: black">
-                  <div class="col-md-12 q-mb-md">
-                    <q-card class="card-collaborator" @click="setLocalization(props.row.position)">
-                      <q-card-section class="text-center">
-                        <strong>{{ props.row.name }}</strong>
-                      </q-card-section>
-                    </q-card>
-                  </div>
+                <template v-slot:body="props">
+                  <q-card class="col-md-10 q-mb-sm q-ml-md q-mr-md card-collaborator" @click="setLocalization(props.row.position)" @mouseleave="{props.row.infoWinOpen = false}" @mouseover="{props.row.infoWinOpen = true}">
+                    <q-card-section class="text-center">
+                      <strong>{{ props.row.name }}</strong>
+                    </q-card-section>
+                  </q-card>
                 </template>
               </q-table>
             </div>
@@ -49,7 +48,11 @@
                 style="width: 70vw; height: 100vh;"
                 :style="[{'width': 100}]"
             >
-              <gmap-marker :key="index" v-for="(m, index) in data" :position="m.position" :clickable="true" :draggable="true" @click="center=m.position"></gmap-marker>
+              <gmap-info-window :key="index" v-for="(m, index) in data" :options="m.infoOptions" :position="google && new google.maps.LatLng(m.position.lat, m.position.lng)" :opened="m.infoWinOpen">
+              </gmap-info-window>
+
+              <gmap-marker :key="index" v-for="(m, index) in data" :position="m.position" :clickable="true" :draggable="false" @click="center=m.position">
+              </gmap-marker>
             </gmap-map>
           </div>
       </div>
@@ -66,6 +69,12 @@ export default {
     google: gmapApi
   },
 
+  created () {
+    if (!localStorage.getItem('access_token')) {
+      this.$router.push('/')
+    }
+  },
+
   data () {
     return {
       setCordenadas: { lat: -18.9208517, lng: -48.2702901 },
@@ -77,137 +86,42 @@ export default {
         rowsPerPage: 50,
         rowsNumber: 10
       },
-      data: [
-        {
-          name: 'Caliton Marcos Gonçalves Junior',
-          position: {
-            lat: -18.9060455,
-            lng: -48.2574803
-          },
-          infoText: '<strong>Marker 1</strong>'
-        },
-        {
-          name: 'Nicolas Araujo',
-          position: {
-            lat: -18.9428692,
-            lng: -48.3131997
-          },
-          infoText: '<strong>Marker 2</strong>'
-        },
-        {
-          name: 'Landix Sistemas',
-          position: {
-            lat: -18.8771292,
-            lng: -48.2472295
-          },
-          infoText: '<strong>Marker 3</strong>'
-        },
-        {
-          name: 'Caliton Marcos Gonçalves Junior',
-          position: {
-            lat: -18.9060455,
-            lng: -48.2574803
-          },
-          infoText: '<strong>Marker 1</strong>'
-        },
-        {
-          name: 'Nicolas Araujo',
-          position: {
-            lat: -18.9428692,
-            lng: -48.3131997
-          },
-          infoText: '<strong>Marker 2</strong>'
-        },
-        {
-          name: 'Landix Sistemas',
-          position: {
-            lat: -18.8771292,
-            lng: -48.2472295
-          },
-          infoText: '<strong>Marker 3</strong>'
-        },
-        {
-          name: 'Caliton Marcos Gonçalves Junior',
-          position: {
-            lat: -18.9060455,
-            lng: -48.2574803
-          },
-          infoText: '<strong>Marker 1</strong>'
-        },
-        {
-          name: 'Nicolas Araujo',
-          position: {
-            lat: -18.9428692,
-            lng: -48.3131997
-          },
-          infoText: '<strong>Marker 2</strong>'
-        },
-        {
-          name: 'Landix Sistemas',
-          position: {
-            lat: -18.8771292,
-            lng: -48.2472295
-          },
-          infoText: '<strong>Marker 3</strong>'
-        },
-
-        {
-          name: 'Caliton Marcos Gonçalves Junior',
-          position: {
-            lat: -18.9060455,
-            lng: -48.2574803
-          },
-          infoText: '<strong>Marker 1</strong>'
-        },
-        {
-          name: 'Nicolas Araujo',
-          position: {
-            lat: -18.9428692,
-            lng: -48.3131997
-          },
-          infoText: '<strong>Marker 2</strong>'
-        },
-        {
-          name: 'Landix Sistemas',
-          position: {
-            lat: -18.8771292,
-            lng: -48.2472295
-          },
-          infoText: '<strong>Marker 3</strong>'
-        },
-
-        {
-          name: 'Caliton Marcos Gonçalves Junior',
-          position: {
-            lat: -18.9060455,
-            lng: -48.2574803
-          },
-          infoText: '<strong>Marker 1</strong>'
-        },
-        {
-          name: 'Nicolas Araujo',
-          position: {
-            lat: -18.9428692,
-            lng: -48.3131997
-          },
-          infoText: '<strong>Marker 2</strong>'
-        },
-        {
-          name: 'Landix Sistemas',
-          position: {
-            lat: -18.8771292,
-            lng: -48.2472295
-          },
-          infoText: '<strong>Marker 3</strong>'
-        }
-
-      ]
+      data: []
     }
+  },
+
+  mounted () {
+    this.refresh()
   },
 
   methods: {
     setLocalization (position) {
       this.setCordenadas = { ...position }
+    },
+
+    refresh () {
+      this.onRequest()
+    },
+
+    showPin (ele) {
+      ele.infoWinOpen = true
+    },
+
+    async onRequest () {
+      this.loading = true
+
+      const returnedData = await this.$axios.get('User', { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } })
+
+      console.log(returnedData)
+      returnedData.data.forEach((item, i) => {
+        returnedData.data[i].position = { lat: Number(returnedData.data[i].userAddress.latitude), lng: Number(returnedData.data[i].userAddress.longitude) }
+        returnedData.data[i].infoOptions = { content: `${item.userAddress.addressName}, ${item.userAddress.zipCode} - ${item.userAddress.neighborhood}, ${item.userAddress.city} - ${item.userAddress.state}, ${item.userAddress.country}` }
+        returnedData.data[i].infoWinOpen = false
+      })
+
+      this.data.splice(0, this.data.length, ...returnedData.data)
+
+      this.loading = false
     },
 
     logout () {
@@ -226,4 +140,24 @@ export default {
   cursor: pointer;
   background-color: #f7f6f6
   transition: transform .28s, background-color .28s
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #eee;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #f7f6f6;
+}
 </style>
