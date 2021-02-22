@@ -2,25 +2,22 @@
 
 Aplicação para saber onde seus colaboradores estão trabalhando
 
-## Install the dependencies
+## Instalar dependencias
 ```bash
 npm install
 ```
 
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
+### Iniciar projeto modo de desenvolvimento
 ```bash
 quasar dev
 ```
 
-### Lint the files
+### Rodar aquivos lint
 ```bash
 npm run lint
 ```
 
-### Build the app for production
+### Buildar projeto para produção
 ```bash
 quasar build
 ```
-
-### Customize the configuration
-See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).
